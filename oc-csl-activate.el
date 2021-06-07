@@ -106,11 +106,13 @@ Returns a (BEG . END) pair."
 	       'org-cite-key
 	     (setq all-keys-found nil)
 	     'error))))
-      (when all-keys-found
-	(put-text-property beg end 'cursor-sensor-functions
-			   (list #'org-cite-csl-activate--sensor-fun))
-	(put-text-property (- end 1) end 'rear-nonsticky
-			   '(cursor-sensor-functions))))))
+      (if all-keys-found
+	  (progn
+	    (put-text-property beg end 'cursor-sensor-functions
+			       (list #'org-cite-csl-activate--sensor-fun))
+	    (put-text-property (- end 1) end 'rear-nonsticky
+			       '(cursor-sensor-functions)))
+	(put-text-property beg end 'cursor-sensor-functions nil)))))
 
 
 ;;; Register the activation processor
