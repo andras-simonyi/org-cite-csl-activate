@@ -22,8 +22,11 @@ The provided activation processor can be selected by executing
 (setq org-cite-activate-processor 'csl-activate)
 ```
 
+In addition, ˙cursor-sensor-mode` must be turned on in the Org buffer.
+
 ## Limitations
-This is alpha quality code, all sorts of glitches are to be expected!
+This is alpha quality code, you will certainly encounter all kinds of problems
+and glitches!
 
 
 
