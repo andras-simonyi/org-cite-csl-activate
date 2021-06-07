@@ -112,7 +112,8 @@ Returns a (BEG . END) pair."
 			       (list #'org-cite-csl-activate--sensor-fun))
 	    (put-text-property (- end 1) end 'rear-nonsticky
 			       '(cursor-sensor-functions)))
-	(put-text-property beg end 'cursor-sensor-functions nil)))))
+	(put-text-property beg end 'cursor-sensor-functions nil)
+	(put-text-property beg end 'display  nil)))))
 
 
 ;;; Register the activation processor
