@@ -35,7 +35,8 @@
 ;;; Internal variables and functions
 
 (defvar org-cite-csl-activate--processor-cache nil
-  "Cache for the citation processor.")
+  "Cache for the citation processor."
+  (make-variable-buffer-local org-cite-csl-activate--processor-cache))
 
 (defun org-cite-csl-activate--processor ()
   "Return a `citeproc-el' processor for activation."
