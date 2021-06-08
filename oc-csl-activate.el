@@ -37,7 +37,7 @@
 (defvar org-cite-csl-activate--processor-cache nil
   "Cache for the citation processor.")
 
-(űmake-variable-buffer-local 'org-cite-csl-activate--processor-cache)
+(make-variable-buffer-local 'org-cite-csl-activate--processor-cache)
 
 (defun org-cite-csl-activate--processor ()
   "Return a `citeproc-el' processor for activation."
