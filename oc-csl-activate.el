@@ -68,17 +68,22 @@ Return nil if KEY is not found."
 	(setq element (org-element-property :parent element)))
       (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries element)))
 	(if (eq motion 'left)
-	    (let ((proc (org-cite-csl-activate--processor)))
-	      (citeproc-clear proc)
-	      (let* ((info (list :cite-citeproc-processor proc))
-		     (cit-struct (org-cite-csl--create-structure element info)))
-		(citeproc-append-citations (list cit-struct) proc)
-		(put-text-property beg end
-				   'display
-				   (car (citeproc-render-citations proc 'plain t)))
-		(put-text-property beg end 'help-echo
-				   (car (citeproc-render-bib proc 'plain nil)))))
+	    (org-cite-csl-activate--fontify-rendered element beg end)
 	  (put-text-property beg end 'display nil))))))
+
+(defun org-cite-csl-activate--fontify-rendered (citation beg end)
+  "Fontify CITATION with boundaries BEG END by rendering it."
+  (let ((proc (org-cite-csl-activate--processor)))
+    (citeproc-clear proc)
+    (let* ((info (list :cite-citeproc-processor proc))
+	   (cit-struct (org-cite-csl--create-structure citation info)))
+      (citeproc-append-citations (list cit-struct) proc)
+      (put-text-property beg end
+			 'display
+			 (car (citeproc-render-citations proc 'plain t)))
+      (put-text-property beg end 'help-echo
+			 (car (citeproc-render-bib proc
+						   'plain nil))))))
 
 
 ;;; Utilities 
@@ -116,7 +121,7 @@ Returns a (BEG . END) pair."
 	    (put-text-property (- end 1) end 'rear-nonsticky
 			       '(cursor-sensor-functions)))
 	(put-text-property beg end 'cursor-sensor-functions nil)
-	(put-text-property beg end 'display  nil)))))
+	(put-text-property beg end 'display nil)))))
 
 
 ;;; Register the activation processor
