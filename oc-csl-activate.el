@@ -23,7 +23,7 @@
 
 ;; This library provides an (experimental) org-cite activation processor that
 ;; fontifies Org citations by rendering them with the citeproc-el CSL citation
-;; processor. 
+;; processor.  The processor is registered under the name `csl-activate'.
 
 ;;; Code:
 
