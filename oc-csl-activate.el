@@ -21,10 +21,9 @@
 
 ;;; Commentary:
 
-;; This library provides an (experimental) org-cite activation processor, which
+;; This library provides an (experimental) org-cite activation processor that
 ;; fontifies Org citations by rendering them with the citeproc-el CSL citation
-;; processor. Warning: `cursor-sensor-mode' must be turned on for the library to
-;; work properly.
+;; processor. 
 
 ;;; Code:
 
@@ -94,6 +93,8 @@ Returns a (BEG . END) pair."
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
   "Fontify CITATION object by rendering it with `citeproc-el'."
+  ;; REVIEW: is this the optimal way to ensure that cursor-sensor-mode is on?
+  (cursor-sensor-mode 1)
   (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
     (put-text-property beg end font-lock-multiline t)
     (add-face-text-property beg end 'org-cite)
