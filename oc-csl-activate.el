@@ -59,18 +59,6 @@ Return nil if KEY is not found."
 	 (result (funcall item-getter (list key))))
     (alist-get key result)))
 
-(defun org-cite-csl-activate--sensor-fun (_ prev motion)
-  "Cursor sensor function for activated citations."
-  (let* ((pos (if (eq motion 'left) prev (point)))
-	 (element (org-with-point-at pos (org-element-context))))
-    (when (memq (car element) '(citation citation-reference))
-      (when (eq (car element) 'citation-reference)
-	(setq element (org-element-property :parent element)))
-      (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries element)))
-	(if (eq motion 'left)
-	    (org-cite-csl-activate--fontify-rendered element beg end)
-	  (put-text-property beg end 'display nil))))))
-
 (defun org-cite-csl-activate--fontify-rendered (citation beg end)
   "Fontify CITATION with boundaries BEG END by rendering it."
   (let ((proc (org-cite-csl-activate--processor)))
@@ -85,6 +73,19 @@ Return nil if KEY is not found."
 			 (car (citeproc-render-bib proc
 						   'plain nil))))))
 
+
+(defun org-cite-csl-activate--sensor-fun (_ prev motion)
+  "Cursor sensor function for activated citations."
+  (let* ((pos (if (eq motion 'left) prev (point)))
+	 (element (org-with-point-at pos (org-element-context))))
+    (when (memq (car element) '(citation citation-reference))
+      (when (eq (car element) 'citation-reference)
+	(setq element (org-element-property :parent element)))
+      (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries element)))
+	(if (eq motion 'left)
+	    (org-cite-csl-activate--fontify-rendered element beg end)
+	  (put-text-property beg end 'display nil))))))
+
 
 ;;; Utilities 
 (defun org-cite-get-boundaries (citation)
@@ -97,11 +98,22 @@ Returns a (BEG . END) pair."
     (cons beg end)))
 
 
+;;; Main entry points 
+
+(defun org-cite-csl-activate-render-all ()
+  "Fontify all citations in the buffer by rendering them."
+  (interactive)
+  (let ((parsed-buffer (org-element-parse-buffer)))
+    (org-element-map parsed-buffer '(citation)
+      (lambda (citation)
+	(pcase-let ((`(,beg . ,end)
+		     (org-cite-get-boundaries citation)))
+	  (unless (<= beg (point) end)
+	    (org-cite-csl-activate--fontify-rendered citation beg end)))))))
+
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
   "Fontify CITATION object by rendering it with `citeproc-el'."
-  ;; REVIEW: is this the optimal way to ensure that cursor-sensor-mode is on?
-  (cursor-sensor-mode 1)
   (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
     (put-text-property beg end font-lock-multiline t)
     (add-face-text-property beg end 'org-cite)
