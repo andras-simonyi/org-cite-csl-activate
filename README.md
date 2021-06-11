@@ -45,8 +45,8 @@ rendered when an Org document is loaded is to add these commands to `org-mode-ho
 ```
 
 ## Known bugs and limitations
-This is alpha quality code, you will certainly encounter all kinds of problems
-and glitches!
+This is untested, alpha quality code, you will certainly encounter all kinds of problems
+and glitches.
 
 
 
