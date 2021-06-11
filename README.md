@@ -15,14 +15,36 @@ Drop `oc-csl-activate.el` somewhere on your load path.
 
 ## Usage
 
-The provided activation processor can be selected by executing
+The library requires `cursor-sensor-mode` to be turned on in the Org buffer in
+which citations should be rendered, and the provided activation processor should
+be selected by executing
 
 ``` emacs-lisp
 (require 'oc-csl-activate)
 (setq org-cite-activate-processor 'csl-activate)
 ```
 
-## Limitations
+This causes _edited_ Org citations with valid cite keys to be rendered
+immediately when the cursor leaves them, but unedited citations remain
+unrendered. The interactive command
+
+``` emacs-lisp
+org-cite-csl-activate-render-all
+```
+
+in contrast, renders all Org citations in the current buffer.
+
+One way of making sure that `cursor-sensor-mode` is turned on and citations are
+rendered when an Org document is loaded is to add these commands to `org-mode-hook`:
+
+``` emacs-lisp
+(add-hook 'org-mode-hook
+	      (lambda ()
+	       (cursor-sensor-mode 1)
+	       (org-cite-csl-activate-render-all)))
+```
+
+## Known bugs and limitations
 This is alpha quality code, you will certainly encounter all kinds of problems
 and glitches!
 
