@@ -44,7 +44,7 @@ rendered when an Org document is loaded is to add these commands to `org-mode-ho
 	       (org-cite-csl-activate-render-all)))
 ```
 
-## Known bugs and limitations
+## Limitations
 This is untested, alpha quality code, you will certainly encounter all kinds of problems
 and glitches.
 
