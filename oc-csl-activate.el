@@ -28,6 +28,8 @@
 ;;; Code:
 
 (require 'citeproc)
+(require 'org-element)
+(require 'ox)
 (require 'oc)
 (require 'oc-csl)
 
