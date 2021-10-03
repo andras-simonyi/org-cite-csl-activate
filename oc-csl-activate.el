@@ -48,7 +48,7 @@
 	     (processor
 	      (citeproc-create
 	       org-cite-csl--fallback-style-file
-	       (org-cite-csl--itemgetter bibliography)
+	       (citeproc-hash-itemgetter-from-any bibliography)
 	       (org-cite-csl--locale-getter))))
 	(setq org-cite-csl-activate--processor-cache processor)
 	processor)))
