@@ -33,6 +33,10 @@
 (require 'oc)
 (require 'oc-csl)
 
+(defvar org-cite-csl-activate-use-document-style nil
+  "Whether to use the citation style of the current document.
+When nil, `org-cite-csl--fallback-style-file' is always used.")
+
 
 ;;; Internal variables and functions
 
@@ -45,9 +49,16 @@
   "Return a `citeproc-el' processor for activation."
   (or org-cite-csl-activate--processor-cache
       (let* ((bibliography (org-cite-list-bibliography-files))
+	     (cite-string (cadar (org-collect-keywords '("CITE_EXPORT"))))
+	     (cite-spec (when (stringp cite-string) (split-string cite-string "[ \t]")))
+	     (csl-style (if (and cite-spec (string= "csl" (car cite-spec)) (cdr cite-spec))
+			    (expand-file-name (cadr cite-spec) org-cite-csl-styles-dir)
+			  org-cite-csl--fallback-style-file))
 	     (processor
 	      (citeproc-create
-	       org-cite-csl--fallback-style-file
+	       (if org-cite-csl-activate-use-document-style
+                   csl-style
+                 org-cite-csl--fallback-style-file)
 	       (citeproc-hash-itemgetter-from-any bibliography)
 	       (org-cite-csl--locale-getter))))
 	(setq org-cite-csl-activate--processor-cache processor)
