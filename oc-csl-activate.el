@@ -91,18 +91,14 @@ Return nil if KEY is not found."
 			 (car (citeproc-render-bib proc
 						   'plain nil))))))
 
-
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
   (let* ((pos (if (eq motion 'left) prev (point)))
-	 (element (org-with-point-at pos (org-element-context))))
-    (when (memq (car element) '(citation citation-reference))
-      (when (eq (car element) 'citation-reference)
-	(setq element (org-element-property :parent element)))
-      (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries element)))
-	(if (eq motion 'left)
-	    (org-cite-csl-activate--fontify-rendered element beg end)
-	  (put-text-property beg end 'display nil))))))
+	 (citation (get-text-property pos 'citation-object)))
+    (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
+      (if (eq motion 'left)
+	  (org-cite-csl-activate--fontify-rendered citation beg end)
+	(put-text-property beg end 'display nil)))))
 
 
 ;;; Utilities 
@@ -126,7 +122,7 @@ Returns a (BEG . END) pair."
       (lambda (citation)
 	(pcase-let ((`(,beg . ,end)
 		     (org-cite-get-boundaries citation)))
-	  (unless (<= beg (point) end)
+	  (unless (and (<= beg (point)) (<= (point) end))
 	    (org-cite-csl-activate--fontify-rendered citation beg end)))))))
 
 ;;; Activation function 
@@ -146,6 +142,7 @@ Returns a (BEG . END) pair."
 	     'error))))
       (if all-keys-found
 	  (progn
+	    (put-text-property beg end 'citation-object citation)
 	    (put-text-property beg end 'cursor-sensor-functions
 			       (list #'org-cite-csl-activate--sensor-fun))
 	    (put-text-property (- end 1) end 'rear-nonsticky
