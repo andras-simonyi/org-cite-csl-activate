@@ -117,13 +117,12 @@ Returns a (BEG . END) pair."
 (defun org-cite-csl-activate-render-all ()
   "Fontify all citations in the buffer by rendering them."
   (interactive)
-  (let ((parsed-buffer (org-element-parse-buffer)))
-    (org-element-map parsed-buffer '(citation)
-      (lambda (citation)
-	(pcase-let ((`(,beg . ,end)
-		     (org-cite-get-boundaries citation)))
-	  (unless (and (<= beg (point)) (<= (point) end))
-	    (org-cite-csl-activate--fontify-rendered citation beg end)))))))
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward org-element-citation-prefix-re nil t)
+      (let ((citation (org-element-property :parent (org-element-context))))
+	(pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
+	  (org-cite-csl-activate--fontify-rendered citation beg end))))))
 
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
