@@ -9,7 +9,7 @@ referred to.
 
 ## Requirements
 
-+ Up-to-date `wip-cite-new' Org development branch.
++ Org 9.5 or later.
 + The [citeproc-el](https://github.com/andras-simonyi/citeproc-el) library.
 
 ## Installation
@@ -48,14 +48,13 @@ rendered when an Org document is loaded is to add these commands to `org-mode-ho
 ```
 
 ## Known bugs and limitations
-This is untested, alpha quality code, you will certainly encounter all kinds of problems
-and glitches. In particular,
+This is untested code, you will most probably encounter some problems and
+glitches. In particular,
 
-+ rendering according to cite substyles (e.g., `cite/c`) is not yet supported;
 + deleting citations when the cursor positioned _after_ the citation behaves
   weirdly, because the rendered citation is not removed and the user is unable
   to see what is happening under the replaced text until everything gets deleted;
-+ citation rendering is not disambiguated.
++ citation rendering is not disambiguated (only within the same citation).
 
 
 
