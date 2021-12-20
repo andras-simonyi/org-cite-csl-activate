@@ -94,8 +94,7 @@ Return nil if KEY is not found."
       (setq rendered-cite (car (citeproc-render-citations proc 'plain t)))
       (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
       (put-text-property beg end 'rendered-cite rendered-cite)
-      (put-text-property beg end 'rendered-bib rendered-bib)
-      (put-text-property beg end 'citation-object citation))
+      (put-text-property beg end 'rendered-bib rendered-bib))
     ;; Display rendered cite and bib
     (put-text-property beg end 'display rendered-cite)
     (put-text-property beg end 'help-echo rendered-bib)))
@@ -103,11 +102,14 @@ Return nil if KEY is not found."
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
   (let* ((pos (if (eq motion 'left) prev (point)))
-	 (citation (get-text-property pos 'citation-object)))
-    (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
-      (if (eq motion 'left)
-	  (org-cite-csl-activate--fontify-rendered citation beg end)
-	(put-text-property beg end 'display nil)))))
+	 (element (org-with-point-at pos (org-element-context))))
+    (when (memq (car element) '(citation citation-reference))
+      (when (eq (car element) 'citation-reference)
+	(setq element (org-element-property :parent element)))
+      (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
+	(if (eq motion 'left)
+	    (org-cite-csl-activate--fontify-rendered element beg end)
+	  (put-text-property beg end 'display nil))))))
 
 
 ;;; Utilities 
@@ -140,7 +142,6 @@ Returns a (BEG . END) pair."
   (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
     (put-text-property beg end font-lock-multiline t)
     (add-face-text-property beg end 'org-cite)
-    (put-text-property beg end 'citation-object citation)
     (let ((all-keys-found t))
       (dolist (reference (org-cite-get-references citation))
 	(let ((boundaries (org-cite-key-boundaries reference)))
