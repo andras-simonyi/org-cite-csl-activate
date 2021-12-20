@@ -79,39 +79,47 @@ Return nil if KEY is not found."
 
 (defun org-cite-csl-activate--fontify-rendered (citation beg end)
   "Fontify CITATION with boundaries BEG END by rendering it."
-  (let ((proc (org-cite-csl-activate--processor)))
-    (citeproc-clear proc)
-    (let* ((info (list :cite-citeproc-processor proc))
-	   (cit-struct (org-cite-csl--create-structure citation info)))
-      (citeproc-append-citations (list cit-struct) proc)
-      (put-text-property beg end
-			 'display
-			 (car (citeproc-render-citations proc 'plain t)))
-      (put-text-property beg end 'help-echo
-			 (car (citeproc-render-bib proc
-						   'plain nil)))
-      (put-text-property beg end 'citation-object citation))))
+  (let* ((rendered-cit-struct (get-text-property beg 'rendered-cit-struct))
+	 (proc (org-cite-csl-activate--processor))
+	 (info (list :cite-citeproc-processor proc))
+	 (act-cit-struct (org-cite-csl--create-structure citation info))
+	 rendered-cite rendered-bib)
+    (if  (equal rendered-cit-struct act-cit-struct)
+	(setq  rendered-cite (get-text-property beg 'rendered-cite)
+	       rendered-bib (get-text-property beg 'rendered-bib))
+      ;; Re-render if the citation structure changed
+      (citeproc-clear proc)
+      (put-text-property beg end 'rendered-cit-struct (copy-sequence act-cit-struct))
+      (citeproc-append-citations (list act-cit-struct) proc)
+      (setq rendered-cite (car (citeproc-render-citations proc 'plain t)))
+      (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+      (put-text-property beg end 'rendered-cite rendered-cite)
+      (put-text-property beg end 'rendered-bib rendered-bib)
+      (put-text-property beg end 'citation-object citation))
+    ;; Display rendered cite and bib
+    (put-text-property beg end 'display rendered-cite)
+    (put-text-property beg end 'help-echo rendered-bib)))
 
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
   (let* ((pos (if (eq motion 'left) prev (point)))
 	 (citation (get-text-property pos 'citation-object)))
-    (when citation
-	(pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
-	  (if (eq motion 'left)
-	      (org-cite-csl-activate--fontify-rendered citation beg end)
-	    (put-text-property beg end 'display nil))))))
+    (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
+      (if (eq motion 'left)
+	  (org-cite-csl-activate--fontify-rendered citation beg end)
+	(put-text-property beg end 'display nil)))))
 
 
 ;;; Utilities 
-(defun org-cite-get-boundaries (citation)
-  "Return the beginning and end position of CITATION.
+
+(defun org-cite-csl-activate--get-boundaries (pos)
+    "Return the beginning and end of a citation containing POS.
 Returns a (BEG . END) pair."
-  (let ((beg (org-element-property :begin citation))
-	(end (org-with-point-at (org-element-property :end citation)
-	       (skip-chars-backward " \t")
-	       (point))))
-    (cons beg end)))
+  (save-excursion
+    (let (end)
+      (goto-char pos)
+      (setq end (search-forward "]"))
+      (cons (search-backward "[") end))))
 
 
 ;;; Main entry points 
@@ -123,13 +131,13 @@ Returns a (BEG . END) pair."
     (goto-char (point-min))
     (while (re-search-forward org-element-citation-prefix-re nil t)
       (let ((citation (org-element-property :parent (org-element-context))))
-	(pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
+	(pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
 	  (org-cite-csl-activate--fontify-rendered citation beg end))))))
 
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
   "Fontify CITATION object by rendering it with `citeproc-el'."
-  (pcase-let ((`(,beg . ,end) (org-cite-get-boundaries citation)))
+  (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
     (put-text-property beg end font-lock-multiline t)
     (add-face-text-property beg end 'org-cite)
     (put-text-property beg end 'citation-object citation)
@@ -149,7 +157,8 @@ Returns a (BEG . END) pair."
 	    (put-text-property (- end 1) end 'rear-nonsticky
 			       '(cursor-sensor-functions)))
 	(put-text-property beg end 'cursor-sensor-functions nil)
-	(put-text-property beg end 'display nil)))))
+	(put-text-property beg end 'display nil)
+	(put-text-property beg end 'help-echo nil)))))
 
 
 ;;; Register the activation processor
