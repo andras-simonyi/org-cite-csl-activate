@@ -157,7 +157,8 @@ Returns a (BEG . END) pair."
 	    (put-text-property (- end 1) end 'rear-nonsticky
 			       '(cursor-sensor-functions)))
 	(put-text-property beg end 'cursor-sensor-functions nil)
-	(put-text-property beg end 'display nil)))))
+	(put-text-property beg end 'display nil)
+	(put-text-property beg end 'help-echo nil)))))
 
 
 ;;; Register the activation processor
