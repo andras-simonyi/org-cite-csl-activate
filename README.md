@@ -54,7 +54,9 @@ glitches. In particular,
 + deleting citations when the cursor positioned _after_ the citation behaves
   weirdly, because the rendered citation is not removed and the user is unable
   to see what is happening under the replaced text until everything gets deleted;
-+ citation rendering is not disambiguated (only within the same citation).
++ citation rendering is not disambiguated (only within the same citation);
++ rendering a large number of citations may be slow, my (old) laptop renders approximately 
+  40 citations per second.
 
 
 
