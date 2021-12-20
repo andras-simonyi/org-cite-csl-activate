@@ -56,7 +56,7 @@ glitches. In particular,
   to see what is happening under the replaced text until everything gets deleted;
 + citation rendering is not disambiguated (only within the same citation);
 + rendering a large number of citations using `org-cite-csl-activate-render-all` may be slow, my (old) laptop renders approximately 
-  40 citations per second.
+  150 citations per second on average.
 
 
 
