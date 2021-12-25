@@ -51,7 +51,7 @@ The command `org-cite-csl-activate-render-all` can also be added to
 can slow down opening documents with a large number of citations; see the next
 section for some (anecdotical) details.
 
-# Customization
+## Customization
 
 Citations and the associated ’mini bibliographies’ are rendered in the default
 CSL style by default (typically, Chicago author-date), but this can be changed
