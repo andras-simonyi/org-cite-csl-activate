@@ -46,7 +46,7 @@ corresponding command to `org-mode-hook`:
 
 The command `org-cite-csl-activate-render-all` can also be added to
 `org-mode-hook` to render all citations upon opening an Org document but this
-can slow down opening documents with a large number of citations; see the next
+can slow down opening documents with a large number of citations; see the last
 section for some (anecdotical) details.
 
 ## Customization
