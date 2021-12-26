@@ -41,9 +41,7 @@ One way of making sure that `cursor-sensor-mode` is turned on is adding the
 corresponding command to `org-mode-hook`:
 
 ``` emacs-lisp
-(add-hook 'org-mode-hook
-	      (lambda ()
-	       (cursor-sensor-mode 1)))
+(add-hook 'org-mode-hook (lambda () (cursor-sensor-mode 1)))
 ```
 
 The command `org-cite-csl-activate-render-all` can also be added to
