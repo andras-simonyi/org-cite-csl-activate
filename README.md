@@ -53,13 +53,15 @@ section for some (anecdotical) details.
 
 Citations and the associated ’mini bibliographies’ are rendered in the default
 CSL style by default (typically, Chicago author-date), but this can be changed
-by setting the `org-cite-csl-activate-use-document-style` variable:
+by setting the `org-cite-csl-activate-use-document-style` variable to a non-nil value:
 
 ``` emacs-lisp
-(setq org-cite-csl-activate-use-document-style "/path/to/my_style.csl")
+(setq org-cite-csl-activate-use-document-style t)
 ```
 
-> :warning: **Warning:** Setting this variable to a CSL style which doesn’t belong to the `author-date` category will almost certainly cause rendering problems.
+in which case the CSL style set in the document is used.
+
+> :warning: **Warning:** Setting this variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is uesed will almost certainly cause rendering problems.
 
 ## Known bugs and limitations
 This is mostly untested code, you will most probably encounter some problems and
