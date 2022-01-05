@@ -38,9 +38,21 @@
 (require 'oc)
 (require 'oc-csl)
 
-(defvar org-cite-csl-activate-use-document-style nil
+(defgroup org-cite-csl-activate nil
+  "Options for CSL-based citation activation."
+  :group 'org-cite)
+
+(defcustom org-cite-csl-activate-use-document-style nil
   "Whether to use the citation style of the current document.
-When nil, `org-cite-csl--fallback-style-file' is always used.")
+When nil, `org-cite-csl--fallback-style-file' is always used."
+  :type 'boolean
+  :safe 'booleanp)
+
+(defcustom org-cite-csl-activate-use-document-locale nil
+  "Whether to use the locale of the current document.
+When nil, the fallback of en-US is used."
+  :type 'boolean
+  :safe 'booleanp)
 
 
 ;;; Internal variables and functions
@@ -54,18 +66,18 @@ When nil, `org-cite-csl--fallback-style-file' is always used.")
   "Return a `citeproc-el' processor for activation."
   (or org-cite-csl-activate--processor-cache
       (let* ((bibliography (org-cite-list-bibliography-files))
-	     (cite-string (cadar (org-collect-keywords '("CITE_EXPORT"))))
-	     (cite-spec (when (stringp cite-string) (split-string cite-string "[ \t]")))
-	     (csl-style (if (and cite-spec (string= "csl" (car cite-spec)) (cdr cite-spec))
-			    (expand-file-name (cadr cite-spec) org-cite-csl-styles-dir)
-			  org-cite-csl--fallback-style-file))
 	     (processor
 	      (citeproc-create
-	       (if org-cite-csl-activate-use-document-style
-                   csl-style
-                 org-cite-csl--fallback-style-file)
+               (or (when org-cite-csl-activate-use-document-style
+                     (let* ((cite-string (cadar (org-collect-keywords '("CITE_EXPORT"))))
+	                    (cite-spec (when (stringp cite-string) (split-string cite-string "[ \t]"))))
+                       (when (and cite-spec (string= "csl" (car cite-spec)) (cdr cite-spec))
+			 (expand-file-name (cadr cite-spec) org-cite-csl-styles-dir))))
+                   org-cite-csl--fallback-style-file)
 	       (citeproc-hash-itemgetter-from-any bibliography)
-	       (org-cite-csl--locale-getter))))
+	       (org-cite-csl--locale-getter)
+               (when org-cite-csl-activate-use-document-locale
+                 (cadar (org-collect-keywords '("lang")))))))
 	(setq org-cite-csl-activate--processor-cache processor)
 	processor)))
 

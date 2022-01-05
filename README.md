@@ -52,14 +52,15 @@ section for some (anecdotical) details.
 ## Customization
 
 Citations and the associated ’mini bibliographies’ are rendered in the default
-CSL style by default (typically, Chicago author-date), but this can be changed
-by setting the `org-cite-csl-activate-use-document-style` variable to a non-nil value:
+CSL style and locale by default (typically, Chicago author-date and en_US), but this can be changed
+by setting the variables `org-cite-csl-activate-use-document-style`and `org-cite-csl-activate-use-document-locale` variable to non-nil values:
 
 ``` emacs-lisp
 (setq org-cite-csl-activate-use-document-style t)
+(setq org-cite-csl-activate-use-document-locale t)
 ```
 
-in which case the CSL style set in the document is used.
+in which case the CSL style and locale (org `#+lang:` keyword) set in the document is used.
 
 > :warning: **Warning:** Setting this variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is used will almost certainly cause rendering problems.
 
