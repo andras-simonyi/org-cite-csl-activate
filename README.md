@@ -64,7 +64,7 @@ in which case the CSL style and locale (org `#+lang:` keyword) set in the docume
 
 > :warning: **Warning:** Setting this variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is used will almost certainly cause rendering problems.
 
-## Known bugs and limitations
+## Known problems and limitations
 This is mostly untested code, you will most probably encounter some problems and
 glitches. In particular,
 
