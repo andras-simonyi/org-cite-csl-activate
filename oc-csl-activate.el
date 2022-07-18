@@ -89,28 +89,39 @@ Return nil if KEY is not found."
 	 (result (funcall item-getter (list key))))
     (alist-get key result)))
 
+(defun org-cite-csl-activate--citaton-keys-valid-p (citation)
+  "Return non-nil when all keys CITATION are valid, nil otherwise."
+  (let ((references (org-cite-get-references citation))
+	(all-keys-valid t))
+    (while (and references all-keys-valid)
+      (when (not (org-cite-csl-activate--get-item
+		  (org-element-property :key (pop references))))
+	(setq all-keys-valid nil)))
+    all-keys-valid))
+
 (defun org-cite-csl-activate--fontify-rendered (citation beg end)
   "Fontify CITATION with boundaries BEG END by rendering it."
-  (with-silent-modifications
-    (let* ((rendered-cit-struct (get-text-property beg 'rendered-cit-struct))
-	       (proc (org-cite-csl-activate--processor))
-	       (info (list :cite-citeproc-processor proc))
-	       (act-cit-struct (org-cite-csl--create-structure citation info))
-	       rendered-cite rendered-bib)
-      (if  (equal rendered-cit-struct act-cit-struct)
-	      (setq  rendered-cite (get-text-property beg 'rendered-cite)
-	             rendered-bib (get-text-property beg 'rendered-bib))
-        ;; Re-render if the citation structure changed
-        (citeproc-clear proc)
-        (put-text-property beg end 'rendered-cit-struct (copy-sequence act-cit-struct))
-        (citeproc-append-citations (list act-cit-struct) proc)
-        (setq rendered-cite (car (citeproc-render-citations proc 'plain t)))
-        (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
-        (put-text-property beg end 'rendered-cite rendered-cite)
-        (put-text-property beg end 'rendered-bib rendered-bib))
-      ;; Display rendered cite and bib
-      (put-text-property beg end 'display rendered-cite)
-      (put-text-property beg end 'help-echo rendered-bib))))
+  (when (org-cite-csl-activate--citaton-keys-valid-p citation)
+   (with-silent-modifications
+     (let* ((rendered-cit-struct (get-text-property beg 'rendered-cit-struct))
+	    (proc (org-cite-csl-activate--processor))
+	    (info (list :cite-citeproc-processor proc))
+	    (act-cit-struct (org-cite-csl--create-structure citation info))
+	    rendered-cite rendered-bib)
+       (if (equal rendered-cit-struct act-cit-struct)
+	   (setq rendered-cite (get-text-property beg 'rendered-cite)
+		 rendered-bib (get-text-property beg 'rendered-bib))
+	 ;; Re-render if the citation structure changed
+	 (citeproc-clear proc)
+	 (put-text-property beg end 'rendered-cit-struct (copy-sequence act-cit-struct))
+	 (citeproc-append-citations (list act-cit-struct) proc)
+	 (setq rendered-cite (car (citeproc-render-citations proc 'plain t))
+	       rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	 (put-text-property beg end 'rendered-cite rendered-cite)
+	 (put-text-property beg end 'rendered-bib rendered-bib))
+       ;; Display rendered cite and bib
+       (put-text-property beg end 'display rendered-cite)
+       (put-text-property beg end 'help-echo rendered-bib)))))
 
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
@@ -123,7 +134,7 @@ Return nil if KEY is not found."
 	(if (eq motion 'left)
 	    (org-cite-csl-activate--fontify-rendered element beg end)
 	  (with-silent-modifications
-        (put-text-property beg end 'display nil)))))))
+	    (put-text-property beg end 'display nil)))))))
 
 
 ;;; Utilities 
