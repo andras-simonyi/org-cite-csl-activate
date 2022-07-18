@@ -146,9 +146,10 @@ Returns a (BEG . END) pair."
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward org-element-citation-prefix-re nil t)
-      (let ((citation (org-element-property :parent (org-element-context))))
-	(pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
-	  (org-cite-csl-activate--fontify-rendered citation beg end))))))
+      (let ((parent (org-element-property :parent (org-element-context))))
+	(when (eq (org-element-type parent) 'citation)
+	 (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
+	   (org-cite-csl-activate--fontify-rendered parent beg end)))))))
 
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
