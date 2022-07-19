@@ -54,6 +54,12 @@ When nil, the fallback of en-US is used."
   :type 'boolean
   :safe 'booleanp)
 
+(defcustom org-cite-csl-activate-use-citar-cache nil
+  "Whether to use the Citar cache for retrieving bibliography items.
+When nil, the default Citeproc itemgetter function is used."
+  :type 'boolean
+  :safe 'booleanp)
+
 
 ;;; Internal variables and functions
 
@@ -65,8 +71,7 @@ When nil, the fallback of en-US is used."
 (defun org-cite-csl-activate--processor ()
   "Return a `citeproc-el' processor for activation."
   (or org-cite-csl-activate--processor-cache
-      (let* ((bibliography (org-cite-list-bibliography-files))
-	     (processor
+      (let* ((processor
 	      (citeproc-create
                (or (when org-cite-csl-activate-use-document-style
                      (let* ((cite-string (cadar (org-collect-keywords '("CITE_EXPORT"))))
@@ -74,7 +79,11 @@ When nil, the fallback of en-US is used."
                        (when (and cite-spec (string= "csl" (car cite-spec)) (cdr cite-spec))
 			 (expand-file-name (cadr cite-spec) org-cite-csl-styles-dir))))
                    org-cite-csl--fallback-style-file)
-	       (citeproc-hash-itemgetter-from-any bibliography)
+	       (if org-cite-csl-activate-use-citar-cache
+		   (progn
+		    (org-cite-csl-activate--check-citar)
+		    #'org-cite-csl-activate--citar-itemgetter)
+		 (citeproc-hash-itemgetter-from-any (org-cite-list-bibliography-files)))
 	       (org-cite-csl--locale-getter)
                (when org-cite-csl-activate-use-document-locale
                  (cadar (org-collect-keywords '("lang")))))))
@@ -90,7 +99,7 @@ Return nil if KEY is not found."
     (cdar result)))
 
 (defun org-cite-csl-activate--citaton-keys-valid-p (citation)
-  "Return non-nil when all keys CITATION are valid, nil otherwise."
+  "Return non-nil when all keys of CITATION are valid, nil otherwise."
   (let ((references (org-cite-get-references citation))
 	(all-keys-valid t))
     (while (and references all-keys-valid)
@@ -147,6 +156,40 @@ Returns a (BEG . END) pair."
       (goto-char pos)
       (setq end (search-forward "]"))
       (cons (search-backward "[") end))))
+
+(defun org-cite-csl-activate--cslize-special-vars (entry)
+  "Convert bibtex format name and date field values in ENTRY to CSL."
+  (mapcar
+   (pcase-lambda (`(,var . ,value))
+     (cons var
+      (cond ((memq var citeproc--date-vars) (citeproc-bt--to-csl-date value nil))
+	    ((memq var citeproc--name-vars) (citeproc-bt--to-csl-names value))
+	    (t value))))
+   entry))
+
+(defun org-cite-csl-activate--csl-from-citar-entry (entry)
+  "Return a CSL version of Citar ENTRY."
+  (pcase (caar entry)
+    ('nil nil)
+    ;; If keys are strings then it is a bib(la)tex entry, which has to be converted
+    ;; to CSL.
+    ((pred stringp) (citeproc-blt-entry-to-csl entry))
+    ;; Symbol keys indicate CSL entries, only special vars are converted.
+    ((pred symbolp) (org-cite-csl-activate--cslize-special-vars entry))
+    (_ (error "Bib entry with unknown format: %s" entry))))
+
+(defun org-cite-csl-activate--citar-itemgetter (keys)
+  "Return itemdata for KEYS from the citar cache."
+  (mapcar
+   (lambda (key)
+     (let ((citar-entry (citar-get-entry key)))
+       (cons key (org-cite-csl-activate--csl-from-citar-entry citar-entry))))
+   keys))
+
+(defun org-cite-csl-activate--check-citar ()
+  "Raise an error if Citar is not loaded."
+  (unless (featurep 'citar)
+    (error "Citar is not loaded")))
 
 
 ;;; Main entry points 
