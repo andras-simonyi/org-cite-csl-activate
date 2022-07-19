@@ -51,6 +51,8 @@ section for some (anecdotal) details.
 
 ## Customization
 
+### CSL style and locale
+
 Citations and the associated ‘mini bibliographies’ are rendered in the default
 CSL style and locale by default (typically, Chicago author-date and en_US), but this can be changed
 by setting the variables `org-cite-csl-activate-use-document-style`and `org-cite-csl-activate-use-document-locale` variable to non-nil values:
@@ -60,9 +62,26 @@ by setting the variables `org-cite-csl-activate-use-document-style`and `org-cite
 (setq org-cite-csl-activate-use-document-locale t)
 ```
 
-in which case the CSL style and locale (org `#+lang:` keyword) set in the document is used.
+in which case the CSL style and locale (org `#+language:` keyword) set in the document is used.
 
-> :warning: **Warning:** Setting this variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is used will almost certainly cause rendering problems.
+> :warning: **Warning:** Setting the `org-cite-csl-activate-use-document-style` variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is used will almost certainly cause rendering problems.
+
+### Using the Citar cache for retrieving bibliographic entries
+
+Users of [Citar](https://github.com/emacs-citar/citar) who want perfect
+synchronization between the bibliographic data available for and presented by
+Citar and what is accessed by org-cite-csl-activate can set the variable
+`org-cite-csl-activate-use-citar-cache` to a non-nil value:
+
+``` emacs-lisp
+(setq org-cite-csl-activate-use-citar-cache t)
+```
+
+An important advantage of this setting is that Citar, in contrast to the default
+item getter, automatically detects bibliography file changes and updates entry
+information if necessary. On the negative side, Citar in certain cases stores
+only a subset of the available metadata, so rendering might be a bit different
+from exporting the document with the “csl” export processor.
 
 ## Known problems and limitations
 This is mostly untested code, you will most probably encounter some problems and
