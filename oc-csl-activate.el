@@ -96,7 +96,7 @@ Return nil if KEY is not found."
   (let* ((proc (org-cite-csl-activate--processor))
 	 (item-getter (citeproc-proc-getter proc))
 	 (result (funcall item-getter (list key))))
-    (alist-get key result)))
+    (cdar result)))
 
 (defun org-cite-csl-activate--citaton-keys-valid-p (citation)
   "Return non-nil when all keys of CITATION are valid, nil otherwise."
