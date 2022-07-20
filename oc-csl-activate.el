@@ -146,7 +146,7 @@ Return nil if there is no citation object at the position."
 		 (citeproc-hash-itemgetter-from-any (org-cite-list-bibliography-files)))
 	       (org-cite-csl--locale-getter)
                (when org-cite-csl-activate-use-document-locale
-                 (cadar (org-collect-keywords '("lang")))))))
+                 (cadar (org-collect-keywords '("language")))))))
 	(setq org-cite-csl-activate--processor-cache processor)
 	processor)))
 
