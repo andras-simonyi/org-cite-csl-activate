@@ -38,6 +38,9 @@
 (require 'oc)
 (require 'oc-csl)
 
+
+;;; Variables
+
 (defgroup org-cite-csl-activate nil
   "Options for CSL-based citation activation."
   :group 'org-cite)
@@ -60,13 +63,70 @@ When nil, the default Citeproc itemgetter function is used."
   :type 'boolean
   :safe 'booleanp)
 
-
-;;; Internal variables and functions
+;; Internal
 
 (defvar org-cite-csl-activate--processor-cache nil
   "Cache for the citation processor.")
 
 (make-variable-buffer-local 'org-cite-csl-activate--processor-cache)
+
+
+;;; Utilities
+
+(defun org-cite-csl-activate--get-boundaries (pos)
+  "Return the beginning and end of a citation containing POS.
+Returns a (BEG . END) pair."
+  (save-excursion
+    (let (end)
+      (goto-char pos)
+      (setq end (search-forward "]"))
+      (cons (search-backward "[") end))))
+
+(defun org-cite-csl-activate--get-citation (pos)
+  "Return the citation object at buffer position POS.
+Return nil if there is no citation object at the position."
+  (let ((element (org-with-point-at pos (org-element-context))))
+    (when (memq (car element) '(citation citation-reference))
+      (when (eq (car element) 'citation-reference)
+	(setq element (org-element-property :parent element)))
+      element)))
+
+(defun org-cite-csl-activate--cslize-special-vars (entry)
+  "Convert bibtex format name and date field values in ENTRY to CSL."
+  (mapcar
+   (pcase-lambda (`(,var . ,value))
+     (cons var
+	   (cond ((memq var citeproc--date-vars) (citeproc-bt--to-csl-date value nil))
+		 ((memq var citeproc--name-vars) (citeproc-bt--to-csl-names value))
+		 (t value))))
+   entry))
+
+(defun org-cite-csl-activate--csl-from-citar-entry (entry)
+  "Return a CSL version of Citar ENTRY."
+  (pcase (caar entry)
+    ('nil nil)
+    ;; If keys are strings then it is a bib(la)tex entry, which has to be converted
+    ;; to CSL.
+    ((pred stringp) (citeproc-blt-entry-to-csl entry))
+    ;; Symbol keys indicate CSL entries, only special vars are converted.
+    ((pred symbolp) (org-cite-csl-activate--cslize-special-vars entry))
+    (_ (error "Bib entry with unknown format: %s" entry))))
+
+(defun org-cite-csl-activate--citar-itemgetter (keys)
+  "Return itemdata for KEYS from the citar cache."
+  (mapcar
+   (lambda (key)
+     (let ((citar-entry (citar-get-entry key)))
+       (cons key (org-cite-csl-activate--csl-from-citar-entry citar-entry))))
+   keys))
+
+(defun org-cite-csl-activate--check-citar ()
+  "Raise an error if Citar is not loaded."
+  (unless (featurep 'citar)
+    (error "Citar is not loaded")))
+
+
+;;; Internal functions
 
 (defun org-cite-csl-activate--processor ()
   "Return a `citeproc-el' processor for activation."
@@ -110,86 +170,53 @@ Return nil if KEY is not found."
 
 (defun org-cite-csl-activate--fontify-rendered (citation beg end)
   "Fontify CITATION with boundaries BEG END by rendering it."
-  (when (org-cite-csl-activate--citaton-keys-valid-p citation)
+  (when (and citation (org-cite-csl-activate--citaton-keys-valid-p citation))
    (with-silent-modifications
      (let* ((rendered-cit-struct (get-text-property beg 'rendered-cit-struct))
 	    (proc (org-cite-csl-activate--processor))
 	    (info (list :cite-citeproc-processor proc))
 	    (act-cit-struct (org-cite-csl--create-structure citation info))
-	    rendered-cite rendered-bib)
+	    rendered-cite)
        (if (equal rendered-cit-struct act-cit-struct)
-	   (setq rendered-cite (get-text-property beg 'rendered-cite)
-		 rendered-bib (get-text-property beg 'rendered-bib))
+	   (setq rendered-cite (get-text-property beg 'rendered-cite))
 	 ;; Re-render if the citation structure changed
 	 (citeproc-clear proc)
 	 (put-text-property beg end 'rendered-cit-struct (copy-sequence act-cit-struct))
 	 (citeproc-append-citations (list act-cit-struct) proc)
-	 (setq rendered-cite (car (citeproc-render-citations proc 'plain t))
-	       rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	 (setq rendered-cite (car (citeproc-render-citations proc 'plain t)))
 	 (put-text-property beg end 'rendered-cite rendered-cite)
-	 (put-text-property beg end 'rendered-bib rendered-bib))
+	 ;; Invalidate the rendered bib cache
+	 (put-text-property beg end 'rendered-bib nil))
        ;; Display rendered cite and bib
        (put-text-property beg end 'display rendered-cite)
-       (put-text-property beg end 'help-echo rendered-bib)))))
+       (put-text-property beg end 'help-echo #'org-cite-csl-activate--help-echo-fun)))))
+
+(defun org-cite-csl-activate--help-echo-fun (_ _ pos)
+  "Help-echo function for activated citations."
+  (if-let ((cached-rendered-bib (get-text-property pos 'rendered-bib)))
+      cached-rendered-bib
+    (when-let  ((citation (org-cite-csl-activate--get-citation pos)))
+      (let* ((proc (org-cite-csl-activate--processor))
+	     (info (list :cite-citeproc-processor proc))
+	     (cit-struct (org-cite-csl--create-structure citation info))
+	     rendered-bib)
+	(citeproc-clear proc)
+	(citeproc-append-citations (list cit-struct) proc)
+	(setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	(pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
+	  (with-silent-modifications
+	    (put-text-property beg end 'rendered-bib rendered-bib)))
+	rendered-bib))))
 
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
   (let* ((pos (if (eq motion 'left) prev (point)))
-	 (element (org-with-point-at pos (org-element-context))))
-    (when (memq (car element) '(citation citation-reference))
-      (when (eq (car element) 'citation-reference)
-	(setq element (org-element-property :parent element)))
-      (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
-	(if (eq motion 'left)
-	    (org-cite-csl-activate--fontify-rendered element beg end)
-	  (with-silent-modifications
-	    (put-text-property beg end 'display nil)))))))
-
-
-;;; Utilities 
-
-(defun org-cite-csl-activate--get-boundaries (pos)
-    "Return the beginning and end of a citation containing POS.
-Returns a (BEG . END) pair."
-  (save-excursion
-    (let (end)
-      (goto-char pos)
-      (setq end (search-forward "]"))
-      (cons (search-backward "[") end))))
-
-(defun org-cite-csl-activate--cslize-special-vars (entry)
-  "Convert bibtex format name and date field values in ENTRY to CSL."
-  (mapcar
-   (pcase-lambda (`(,var . ,value))
-     (cons var
-      (cond ((memq var citeproc--date-vars) (citeproc-bt--to-csl-date value nil))
-	    ((memq var citeproc--name-vars) (citeproc-bt--to-csl-names value))
-	    (t value))))
-   entry))
-
-(defun org-cite-csl-activate--csl-from-citar-entry (entry)
-  "Return a CSL version of Citar ENTRY."
-  (pcase (caar entry)
-    ('nil nil)
-    ;; If keys are strings then it is a bib(la)tex entry, which has to be converted
-    ;; to CSL.
-    ((pred stringp) (citeproc-blt-entry-to-csl entry))
-    ;; Symbol keys indicate CSL entries, only special vars are converted.
-    ((pred symbolp) (org-cite-csl-activate--cslize-special-vars entry))
-    (_ (error "Bib entry with unknown format: %s" entry))))
-
-(defun org-cite-csl-activate--citar-itemgetter (keys)
-  "Return itemdata for KEYS from the citar cache."
-  (mapcar
-   (lambda (key)
-     (let ((citar-entry (citar-get-entry key)))
-       (cons key (org-cite-csl-activate--csl-from-citar-entry citar-entry))))
-   keys))
-
-(defun org-cite-csl-activate--check-citar ()
-  "Raise an error if Citar is not loaded."
-  (unless (featurep 'citar)
-    (error "Citar is not loaded")))
+	 (element (org-cite-csl-activate--get-citation pos)))
+    (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
+      (if (eq motion 'left)
+	  (org-cite-csl-activate--fontify-rendered element beg end)
+	(with-silent-modifications
+	  (put-text-property beg end 'display nil))))))
 
 
 ;;; Main entry points 
