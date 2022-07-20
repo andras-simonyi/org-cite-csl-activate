@@ -46,7 +46,7 @@ corresponding command to `org-mode-hook`:
 
 The command `org-cite-csl-activate-render-all` can also be added to
 `org-mode-hook` to render all citations upon opening an Org document but this
-can slow down opening documents with a large number of citations; see the last
+can slow down opening documents with a huge number of citations; see the last
 section for some (anecdotal) details.
 
 ## Customization
@@ -91,9 +91,10 @@ glitches. In particular,
   weirdly, because the rendered citation is not removed and the user is unable
   to see what is happening under the replaced text until everything gets deleted;
 + citation rendering is not disambiguated (only within the same citation);
-+ rendering a large number of citations using `org-cite-csl-activate-render-all`
-  may be slow, my (old) laptop renders approximately 150 citations per second on
-  average.
++ rendering a very large number of citations using
+  `org-cite-csl-activate-render-all` may be slow, my (old) laptop renders
+  approximately 400 citations per second on average. (The speed might be
+  different with `org-cite-csl-activate-use-citar-cache` set to non-nil.)
 
 
 

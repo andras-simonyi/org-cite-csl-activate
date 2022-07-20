@@ -116,21 +116,40 @@ Return nil if KEY is not found."
 	    (proc (org-cite-csl-activate--processor))
 	    (info (list :cite-citeproc-processor proc))
 	    (act-cit-struct (org-cite-csl--create-structure citation info))
-	    rendered-cite rendered-bib)
+	    rendered-cite)
        (if (equal rendered-cit-struct act-cit-struct)
-	   (setq rendered-cite (get-text-property beg 'rendered-cite)
-		 rendered-bib (get-text-property beg 'rendered-bib))
+	   (setq rendered-cite (get-text-property beg 'rendered-cite))
 	 ;; Re-render if the citation structure changed
 	 (citeproc-clear proc)
 	 (put-text-property beg end 'rendered-cit-struct (copy-sequence act-cit-struct))
 	 (citeproc-append-citations (list act-cit-struct) proc)
-	 (setq rendered-cite (car (citeproc-render-citations proc 'plain t))
-	       rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	 (setq rendered-cite (car (citeproc-render-citations proc 'plain t)))
 	 (put-text-property beg end 'rendered-cite rendered-cite)
-	 (put-text-property beg end 'rendered-bib rendered-bib))
+	 ;; Invalidate the rendered bib cache
+	 (put-text-property beg end 'rendered-bib nil))
        ;; Display rendered cite and bib
        (put-text-property beg end 'display rendered-cite)
-       (put-text-property beg end 'help-echo rendered-bib)))))
+       (put-text-property beg end 'help-echo #'org-cite-csl-activate--help-echo-fun)))))
+
+(defun org-cite-csl-activate--help-echo-fun (_ _ pos)
+  "Help-echo function for activated citations."
+  (if-let ((rendered-bib (get-text-property pos 'rendered-bib)))
+      rendered-bib
+    (let  ((element (org-with-point-at pos (org-element-context))))
+      (when (memq (car element) '(citation citation-reference))
+	(when (eq (car element) 'citation-reference)
+	  (setq element (org-element-property :parent element)))
+	(let* ((proc (org-cite-csl-activate--processor))
+	       (info (list :cite-citeproc-processor proc))
+	       (cit-struct (org-cite-csl--create-structure element info))
+	       rendered-bib)
+	  (citeproc-clear proc)
+	  (citeproc-append-citations (list cit-struct) proc)
+	  (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	  (pcase-let ((`(,beg . ,end) (org-cite-boundaries element)))
+	    (with-silent-modifications
+	      (put-text-property beg end 'rendered-bib rendered-bib)))
+	  rendered-bib)))))
 
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
