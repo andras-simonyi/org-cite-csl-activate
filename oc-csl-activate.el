@@ -1,6 +1,6 @@
 ;;; oc-csl-activate.el --- CSL-based citation activation  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 András Simonyi
+;; Copyright (C) 2021-2022 András Simonyi
 ;; Maintainer: András Simonyi <andras.simonyi@gmail.com>
 ;; URL: https://github.com/andras-simonyi/org-cite-csl-activate
 ;; Keywords: csl, org-mode, cite, bib
