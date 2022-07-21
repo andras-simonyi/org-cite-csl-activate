@@ -13,6 +13,7 @@ referred to.
 - [Installation](#installation)
 - [Setup](#setup)
 - [Customization](#customization)
+- [Known problems and limitations](#known-problems-and-limitations)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
@@ -55,8 +56,9 @@ corresponding command to `org-mode-hook`:
 
 The command `org-cite-csl-activate-render-all` can also be added to
 `org-mode-hook` to render all citations upon opening an Org document but this
-can slow down opening documents with a huge number of citations; see the last
-section for some (anecdotal) details.
+can slow down opening documents with a huge number of citations; see the section
+[Known problems and limitations](#known-problems-and-limitations) for some
+(anecdotal) details.
 
 ## Customization
 
