@@ -101,6 +101,9 @@ glitches. In particular,
 + deleting citations when the cursor positioned _after_ the citation behaves
   weirdly, because the rendered citation is not removed and the user is unable
   to see what is happening under the replaced text until everything gets deleted;
++ Org's paragraph filling (line breaking) commands calculate the lengths of
+  citations based on the length of the original citation elements as opposed to
+  the rendered citations which can be visually suboptimal (to put it mildly);
 + citation rendering is not disambiguated (only within the same citation);
 + rendering a very large number of citations using
   `org-cite-csl-activate-render-all` may be slow, my (old) laptop renders
