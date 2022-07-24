@@ -244,10 +244,13 @@ Return nil if KEY is not found."
 	(let ((boundaries (org-cite-key-boundaries reference)))
 	  (add-face-text-property
 	   (car boundaries) (cdr boundaries)
-	   (if (org-cite-csl-activate--get-item (org-element-property :key reference))
-	       'org-cite-key
-	     (setq all-keys-found nil)
-	     'error))))
+	   (pcase-let ((key (org-element-property :key reference))
+		       (`(,style . ,_) (org-cite-citation-style citation nil)))
+	     (if (or (and (or (string= style "nocite") (string= style "n"))
+			  (string= key "*"))
+		     (org-cite-csl-activate--get-item key))
+		 'org-cite-key
+	       (setq all-keys-found nil) 'error)))))
       (if all-keys-found
 	  (progn
 	    (put-text-property beg end 'cursor-sensor-functions
