@@ -170,7 +170,9 @@ Return nil if KEY is not found."
 
 (defun org-cite-csl-activate--fontify-rendered (citation beg end)
   "Fontify CITATION with boundaries BEG END by rendering it."
-  (when (and citation (org-cite-csl-activate--citaton-keys-valid-p citation))
+  (when (and citation
+	     (not (member (car (org-cite-citation-style citation nil)) '("nocite" "n")))
+	     (org-cite-csl-activate--citaton-keys-valid-p citation))
    (with-silent-modifications
      (let* ((rendered-cit-struct (get-text-property beg 'rendered-cit-struct))
 	    (proc (org-cite-csl-activate--processor))
@@ -228,35 +230,41 @@ Return nil if KEY is not found."
     (goto-char (point-min))
     (while (re-search-forward org-element-citation-prefix-re nil t)
       (let ((parent (org-element-property :parent (org-element-context))))
-	(when (eq (org-element-type parent) 'citation)
-	 (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
-	   (org-cite-csl-activate--fontify-rendered parent beg end)))))))
+	(when (and (eq (org-element-type parent) 'citation)
+		   (not (member (car (org-cite-citation-style parent nil))
+				'("n" "nocite"))))
+	  (pcase-let
+	      ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
+	    (org-cite-csl-activate--fontify-rendered parent beg end)))))))
 
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
   "Fontify CITATION object by rendering it with `citeproc-el'."
   (with-silent-modifications
-   (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
-    (put-text-property beg end font-lock-multiline t)
-    (add-face-text-property beg end 'org-cite)
-    (let ((all-keys-found t))
-      (dolist (reference (org-cite-get-references citation))
-	(let ((boundaries (org-cite-key-boundaries reference)))
-	  (add-face-text-property
-	   (car boundaries) (cdr boundaries)
-	   (if (org-cite-csl-activate--get-item (org-element-property :key reference))
-	       'org-cite-key
-	     (setq all-keys-found nil)
-	     'error))))
-      (if all-keys-found
-	  (progn
-	    (put-text-property beg end 'cursor-sensor-functions
-			       (list #'org-cite-csl-activate--sensor-fun))
-	    (put-text-property (- end 1) end 'rear-nonsticky
-			       '(cursor-sensor-functions)))
-	(put-text-property beg end 'cursor-sensor-functions nil)
-	(put-text-property beg end 'display nil)
-	(put-text-property beg end 'help-echo nil))))))
+    (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
+      (put-text-property beg end font-lock-multiline t)
+      (add-face-text-property beg end 'org-cite)
+      (let* ((all-keys-found t)
+	     (style (car (org-cite-citation-style citation nil)))
+	     (nocite (member style '("n" "nocite"))))
+	(dolist (reference (org-cite-get-references citation))
+	  (let ((boundaries (org-cite-key-boundaries reference)))
+	    (add-face-text-property
+	     (car boundaries) (cdr boundaries)
+	     (let ((key (org-element-property :key reference)))
+	       (if (or (org-cite-csl-activate--get-item key) (and nocite (string= key "*")))
+		   'org-cite-key
+		 (setq all-keys-found nil) 'error)))))
+	(if (and all-keys-found (not nocite))
+	    (progn
+	      (put-text-property beg end 'cursor-sensor-functions
+				 (list #'org-cite-csl-activate--sensor-fun))
+	      (put-text-property (- end 1) end 'rear-nonsticky
+				 '(cursor-sensor-functions)))
+	  (put-text-property (- end 1) end 'rear-nonsticky nil)
+	  (put-text-property beg end 'cursor-sensor-functions nil)
+	  (put-text-property beg end 'display nil)
+	  (put-text-property beg end 'help-echo nil))))))
 
 
 ;;; Register the activation processor
