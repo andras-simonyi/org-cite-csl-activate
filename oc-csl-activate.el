@@ -79,8 +79,8 @@ Returns a (BEG . END) pair."
   (save-excursion
     (let (end)
       (goto-char pos)
-      (setq end (search-forward "]"))
-      (cons (search-backward "[") end))))
+      (setq end (search-forward "]" nil t))
+      (cons (search-backward "[" nil t) end))))
 
 (defun org-cite-csl-activate--get-citation (pos)
   "Return the citation object at buffer position POS.
@@ -215,10 +215,11 @@ Return nil if KEY is not found."
   (let* ((pos (if (eq motion 'left) prev (point)))
 	 (element (org-cite-csl-activate--get-citation pos)))
     (pcase-let ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries pos)))
-      (if (eq motion 'left)
-	  (org-cite-csl-activate--fontify-rendered element beg end)
-	(with-silent-modifications
-	  (put-text-property beg end 'display nil))))))
+      (when (and beg end)
+	(if (eq motion 'left)
+	    (org-cite-csl-activate--fontify-rendered element beg end)
+	  (with-silent-modifications
+	    (put-text-property beg end 'display nil)))))))
 
 
 ;;; Main entry points 
@@ -235,7 +236,7 @@ Return nil if KEY is not found."
 				'("n" "nocite"))))
 	  (pcase-let
 	      ((`(,beg . ,end) (org-cite-csl-activate--get-boundaries (+ 2 (point)))))
-	    (org-cite-csl-activate--fontify-rendered parent beg end)))))))
+	    (when (and beg end) (org-cite-csl-activate--fontify-rendered parent beg end))))))))
 
 ;;; Activation function 
 (defun org-cite-csl-activate (citation)
