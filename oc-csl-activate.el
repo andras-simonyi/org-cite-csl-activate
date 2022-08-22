@@ -65,10 +65,8 @@ When nil, the default Citeproc itemgetter function is used."
 
 ;; Internal
 
-(defvar org-cite-csl-activate--processor-cache nil
+(defvar-local org-cite-csl-activate--processor-cache nil
   "Cache for the citation processor.")
-
-(make-variable-buffer-local 'org-cite-csl-activate--processor-cache)
 
 
 ;;; Utilities
