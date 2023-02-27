@@ -4,7 +4,7 @@
 ;; Maintainer: András Simonyi <andras.simonyi@gmail.com>
 ;; URL: https://github.com/andras-simonyi/org-cite-csl-activate
 ;; Keywords: csl, org-mode, cite, bib
-;; Package-Requires: ((emacs "25.1") (org "9.5") (citeproc "0.9")
+;; Package-Requires: ((emacs "25.1") (org "9.5") (citeproc "0.9"))
 ;; Version: 0.0.1
 
 ;; Author: András Simonyi <andras.simonyi@gmail.com>
