@@ -38,6 +38,9 @@
 (require 'oc)
 (require 'oc-csl)
 
+(require 'citar nil t)
+(declare-function citar-get-entry "ext:citar")
+
 
 ;;; Variables
 
