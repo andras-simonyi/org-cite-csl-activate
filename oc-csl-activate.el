@@ -194,22 +194,23 @@ Return nil if KEY is not found."
        (put-text-property beg end 'display rendered-cite)
        (put-text-property beg end 'help-echo #'org-cite-csl-activate--help-echo-fun)))))
 
-(defun org-cite-csl-activate--help-echo-fun (_ _ pos)
+(defun org-cite-csl-activate--help-echo-fun (_ buffer pos)
   "Help-echo function for activated citations."
-  (if-let ((cached-rendered-bib (get-text-property pos 'rendered-bib)))
-      cached-rendered-bib
-    (when-let  ((citation (org-cite-csl-activate--get-citation pos)))
-      (let* ((proc (org-cite-csl-activate--processor))
-	     (info (list :cite-citeproc-processor proc))
-	     (cit-struct (org-cite-csl--create-structure citation info))
-	     rendered-bib)
-	(citeproc-clear proc)
-	(citeproc-append-citations (list cit-struct) proc)
-	(setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
-	(pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
-	  (with-silent-modifications
-	    (put-text-property beg end 'rendered-bib rendered-bib)))
-	rendered-bib))))
+  (with-current-buffer buffer
+   (if-let ((cached-rendered-bib (get-text-property pos 'rendered-bib)))
+       cached-rendered-bib
+     (when-let  ((citation (org-cite-csl-activate--get-citation pos)))
+       (let* ((proc (org-cite-csl-activate--processor))
+	      (info (list :cite-citeproc-processor proc))
+	      (cit-struct (org-cite-csl--create-structure citation info))
+	      rendered-bib)
+	 (citeproc-clear proc)
+	 (citeproc-append-citations (list cit-struct) proc)
+	 (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	 (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
+	   (with-silent-modifications
+	     (put-text-property beg end 'rendered-bib rendered-bib)))
+	 rendered-bib)))))
 
 (defun org-cite-csl-activate--sensor-fun (_ prev motion)
   "Cursor sensor function for activated citations."
