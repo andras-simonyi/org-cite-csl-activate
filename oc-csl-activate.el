@@ -37,6 +37,7 @@
 (require 'ox)
 (require 'oc)
 (require 'oc-csl)
+(require 'subr-x)
 
 (require 'citar nil t)
 (declare-function citar-get-entry "ext:citar")
@@ -65,6 +66,11 @@ When nil, the fallback of en-US is used."
 When nil, the default Citeproc itemgetter function is used."
   :type 'boolean
   :safe 'booleanp)
+
+(defcustom org-cite-csl-activate-tooltip-fill-column fill-column
+  "Column before which to wrap lines in tooltip popup."
+  :type 'integer
+  :safe 'integerp)
 
 ;; Internal
 
@@ -206,7 +212,9 @@ Return nil if KEY is not found."
 	      rendered-bib)
 	 (citeproc-clear proc)
 	 (citeproc-append-citations (list cit-struct) proc)
-	 (setq rendered-bib (car (citeproc-render-bib proc 'plain nil)))
+	 (setq rendered-bib (string-fill
+                             (car (citeproc-render-bib proc 'plain nil))
+                             org-cite-csl-activate-tooltip-fill-column))
 	 (pcase-let ((`(,beg . ,end) (org-cite-boundaries citation)))
 	   (with-silent-modifications
 	     (put-text-property beg end 'rendered-bib rendered-bib)))
