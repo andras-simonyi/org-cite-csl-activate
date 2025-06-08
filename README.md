@@ -78,9 +78,10 @@ in which case the CSL style and locale (org `#+language:` keyword) set in the do
 > :warning: **Warning:** Setting the `org-cite-csl-activate-use-document-style` variable to non-nil when a CSL style which doesn’t belong to the `author-date` category is used will almost certainly cause rendering problems.
 
 The default fallback CSL style can also be changed by setting the
-`org-cite-csl-activate-fallback-style` variable. This should be the file name of
-a CSL style located in `org-cite-csl-styles-dir`. The fallback is used when no
-CSL style is set in the document.
+`org-cite-csl-activate-fallback-style` variable. This should be the file name
+of a CSL style located in `org-cite-csl-styles-dir`. When set in conjunction
+with `org-cite-activate-use-document-style t`, the fallback is used when no CSL
+style is set in the document.
 
 ### Using the Citar cache for retrieving bibliographic entries
 
