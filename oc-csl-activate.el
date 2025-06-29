@@ -51,9 +51,16 @@
 
 (defcustom org-cite-csl-activate-use-document-style nil
   "Whether to use the citation style of the current document.
-When nil, `org-cite-csl--fallback-style-file' is always used."
+When nil, `org-cite-csl-activate-fallback-style` is used if set,
+otherwise `org-cite-csl--fallback-style-file` is used."
   :type 'boolean
   :safe 'booleanp)
+
+(defcustom org-cite-csl-activate-fallback-style nil
+  "Fallback CSL style to use when no document style is set.
+If nil, `org-cite-csl--fallback-style-file` is used."
+  :type '(choice (const nil) string)
+  :group 'org-cite-csl-activate)
 
 (defcustom org-cite-csl-activate-use-document-locale nil
   "Whether to use the locale of the current document.
@@ -145,7 +152,9 @@ Return nil if there is no citation object at the position."
 	                    (cite-spec (when (stringp cite-string) (split-string cite-string "[ \t]"))))
                        (when (and cite-spec (string= "csl" (car cite-spec)) (cdr cite-spec))
 			 (expand-file-name (cadr cite-spec) org-cite-csl-styles-dir))))
-                   org-cite-csl--fallback-style-file)
+                   (if org-cite-csl-activate-fallback-style
+                       (expand-file-name org-cite-csl-activate-fallback-style org-cite-csl-styles-dir)
+                     org-cite-csl--fallback-style-file))
 	       (if org-cite-csl-activate-use-citar-cache
 		   (progn
 		    (org-cite-csl-activate--check-citar)
